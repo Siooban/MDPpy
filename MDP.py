@@ -4,7 +4,7 @@ Created on Wed Mar  2 10:44:29 2022
 
 @author: Sioban
 """
-import numpy as np
+
 import random
 import math
 "states array"
@@ -17,7 +17,7 @@ t3=["up", "bottom", "left", "right"]
 "wall array"
 t4=[(0, 1), (0, 2),(0,3), (2, 2),(1,0), (2,0),(3,0), (4,0),(5,1),(5,2),(5,3),(1,4),(2,4),(3,4),(4,4)]
 
-U=np.zeros((1,11))
+
 
 
 
@@ -146,7 +146,7 @@ c2=0.01
 gamma2=0.55
 
 
-print(valueIteration(t1, t2, t3,t4, gamma, c))
+#print(valueIteration(t1, t2, t3,t4, gamma, c))
 
 
 
@@ -259,7 +259,7 @@ def valueIterationv2(states, reward, actions, gamma, epsilon):
             for k1 in range(len(actions)):
                 t.append(0)
                 
-                probabilityArray=transitionFunction(t1,state,actions[k1])
+                probabilityArray=transitionFunction(states,state,actions[k1])
                 for k2 in range(len(states)):
                   
                     t[k1]+=probabilityArray[k2]*U[k2]
@@ -281,18 +281,18 @@ def valueIterationv2(states, reward, actions, gamma, epsilon):
     
     return U,iterationN
 
-print(valueIterationv2(t1, t2, t3, gamma, c))
+#print(valueIterationv2(t1, t2, t3, gamma, c))
 
 
-def randomPolicy(t1, t3):
+def randomPolicy(states, actions):
     policy=[]
-    for i in range(len(t1)):
+    for i in range(len(states)):
         v=random.randint(0,3)
-        action=t3[v]
+        action=actions[v]
         policy.append(action)
     return policy
 
-def policyEvaluation(pi, U, t1,t2, gamma):
+"""def policyEvaluation(pi, U, t1,t2, gamma):
     Up=np.zeros((1,11))
     for i in range(len(t1)):
         value=0
@@ -301,74 +301,84 @@ def policyEvaluation(pi, U, t1,t2, gamma):
         for k in range(len(t1)):
             value+=probabilityArray[0,k]*U[0,k]
         Up[0,i]+=gamma*value
-    return Up
+    return Up"""
 
         
 
-"""def policyEvaluation(t1,t2,t3,gamma,epsilon, pi):
+def policyEvaluation(states,reward,gamma,epsilon, pi):
     delta=math.inf
-    U=np.zeros((1,11))
-    Up=np.zeros((1,11))
+   # U=np.zeros((1,11))
+    U=[]
+    Up=[]
+    #Up=np.zeros((1,11))
+    for i in range(len(states)):
+        U.append(0)
+        Up.append(0)
     iterationN=0
     while delta > (epsilon*(1-gamma)/gamma) :
-        U=np.copy(Up)
+        U=Up.copy()
         delta=0
         
         
-        for i in range(len(t1)):
-            state=t1[i]
+        for i in range(len(states)):
+            state=states[i]
             "récompense immédiate"
-            Up[0,i]=t2[i]
-            probabilityArray=transitionFunction(t1,state,pi[i])
+            Up[i]=reward[i]
+            probabilityArray=transitionFunction(states,state,pi[i])
             value=0
-            for k1 in range(len(t1)):
-                value+=probabilityArray[0,k1]*U[0,k1]
-            Up[0,i]+=gamma*value
-            if abs(Up[0,i]-U[0,i])>delta:
-                delta=abs(Up[0,i]-U[0,i])
+            for k1 in range(len(states)):
+                value+=probabilityArray[k1]*U[k1]
+            Up[i]+=gamma*value
+            if abs(Up[i]-U[i])>delta:
+                delta=abs(Up[i]-U[i])
         print(Up)
             
         print(iterationN)        
         iterationN+=1
     
-    return U,iterationN
-"""
-    
-#print(policyEvaluation(t1,t2,t3,gamma,c, randomPolicy(t1, t3)))
+    return U
 
-def policyIteration(t1, t2,t3, gamma):
-    U=np.zeros((1,11))
-    pi=randomPolicy(t1, t3)
+    
+print(policyEvaluation(t1,t2,gamma,c, randomPolicy(t1, t3)))
+
+def policyIteration(states, reward,actions, gamma, epsilon):
+   
+    U=[]
+  
+    pi=randomPolicy(states, actions)
     unchanged=False
     while not (unchanged):
-        Up=(policyEvaluation(pi,U,t1,t2,gamma))
-        U=np.copy(Up)
+        Up=(policyEvaluation(states,reward, gamma, epsilon, pi))
+        U=Up.copy()
         print(U)
         print(pi)
         unchanged=True
-        for i in range(len(t1)):
-            state=t1[i]
-            t=[0,0,0,0]
-            for action in t3:
+        for i in range(len(states)):
+            state=states[i]
+            t=[]
+            for j in range(len(actions)):
+                t.append(0)
+            
                 
-                probabilityArray=transitionFunction(t1,state,action)
-                for k1 in range(len(t1)):
-                    t[t3.index(action)]+=probabilityArray[0,k1]*U[0,k1]
-            maxi=np.max(t)
+                probabilityArray=transitionFunction(states,state,actions[j])
+                for k1 in range(len(states)):
+                    
+                    t[j]+=probabilityArray[k1]*U[k1]
+            maxi=max(t)
             indice=t.index(maxi)
             print(indice)
             
-            for k2 in range(len(t1)):
+            for k2 in range(len(states)):
                 value=0
-                probabilityArrayPi=transitionFunction(t1, state, pi[i])
-                for k3 in range(len(t1)):
-                    value+=probabilityArrayPi[0,k3]*U[0,k3]
+                probabilityArrayPi=transitionFunction(states, state, pi[i])
+                for k3 in range(len(states)):
+                    value+=probabilityArrayPi[k3]*U[k3]
             if value<maxi:
-                pi[i]=t3[indice]
+                pi[i]=actions[indice]
                 unchanged=False
     return pi
 
-print(policyIteration(t1, t2,t3, gamma))
+print(policyIteration(t1, t2,t3, gamma,c))
 print(valueIterationv2(t1, t2, t3, gamma, c))
             
                 
