@@ -22,7 +22,7 @@ U=np.zeros((1,11))
 
 
 
-def valueIteration(states, statesValues, actions, wall,  gamma, epsilon):
+def valueIteration(states, reward, actions, wall,  gamma, epsilon):
     delta=math.inf
     U=[]
     Up=[]
@@ -39,7 +39,7 @@ def valueIteration(states, statesValues, actions, wall,  gamma, epsilon):
         for i in range(len(states)):
             state=states[i]
             "récompense immédiate"
-            Up[i]=statesValues[i]
+            Up[i]=reward[i]
             t=[]
             for j in range(len(actions)):
                 t.append(0)
@@ -124,7 +124,7 @@ def valueIteration(states, statesValues, actions, wall,  gamma, epsilon):
                     t[1]+=0.1*U[i]
                 
                 
-            maxi=np.max(t)
+            maxi=max(t)
             
             Up[i]+=gamma*maxi
         
@@ -153,8 +153,9 @@ print(valueIteration(t1, t2, t3,t4, gamma, c))
 
 def transitionFunction(statesArray, state, action):
     #retourne un tableau avec les probabilité associé à chaque état
-    t=np.zeros((1,11))
-    
+    t=[]
+    for i in range(len(statesArray)):
+        t.append(0)
     
     stateup=(state[0], state[1]+1)
     stateleft=(state[0]-1, state[1])
@@ -169,106 +170,110 @@ def transitionFunction(statesArray, state, action):
     "action up and not a terminal state"
     if action=="up":
         if stateup in statesArray:
-            t[0,statesArray.index(stateup)]+=0.8
+            t[statesArray.index(stateup)]+=0.8
         else:
-            t[0, statesArray.index(state)]+=0.8
+            t[statesArray.index(state)]+=0.8
         if stateleft in statesArray:
-            t[0,statesArray.index(stateleft)]+=0.1
+            t[statesArray.index(stateleft)]+=0.1
         else:
-            t[0, statesArray.index(state)]+=0.1
+            t[statesArray.index(state)]+=0.1
         if stateright in statesArray:
-            t[0,statesArray.index(stateright)]+=0.1
+            t[statesArray.index(stateright)]+=0.1
         else:
-            t[0,statesArray.index(state)]+=0.1
+            t[statesArray.index(state)]+=0.1
         
         "action left and not a terminal state"
     if action=="left":
          if stateleft in statesArray:
-            t[0,statesArray.index(stateleft)]+=0.8
+            t[statesArray.index(stateleft)]+=0.8
          else:
-            t[0, statesArray.index(state)]+=0.8
+            t[statesArray.index(state)]+=0.8
          if stateup in statesArray:
-            t[0,statesArray.index(stateup)]+=0.1
+            t[statesArray.index(stateup)]+=0.1
          else:
-            t[0, statesArray.index(state)]+=0.1
+            t[ statesArray.index(state)]+=0.1
          if statebottom in statesArray:
-            t[0,statesArray.index(statebottom)]+=0.1
+            t[statesArray.index(statebottom)]+=0.1
          else:
-            t[0,statesArray.index(state)]+=0.1
+            t[statesArray.index(state)]+=0.1
             
             
     "action right and not a terminal state"
     if action=="right":
          if stateright in statesArray:
-            t[0,statesArray.index(stateright)]+=0.8
+            t[statesArray.index(stateright)]+=0.8
          else:
-            t[0, statesArray.index(state)]+=0.8
+            t[ statesArray.index(state)]+=0.8
          if stateup in statesArray:
-            t[0,statesArray.index(stateup)]+=0.1
+            t[statesArray.index(stateup)]+=0.1
          else:
-            t[0, statesArray.index(state)]+=0.1
+            t[ statesArray.index(state)]+=0.1
          if statebottom in statesArray:
-            t[0,statesArray.index(statebottom)]+=0.1
+            t[statesArray.index(statebottom)]+=0.1
          else:
-            t[0,statesArray.index(state)]+=0.1
+            t[statesArray.index(state)]+=0.1
     
     "action bottom and not a terminal state"
     if action=="bottom":
          if statebottom in statesArray:
-            t[0,statesArray.index(statebottom)]+=0.8
+            t[statesArray.index(statebottom)]+=0.8
          else:
-            t[0, statesArray.index(state)]+=0.8
+            t[ statesArray.index(state)]+=0.8
          if stateleft in statesArray:
-            t[0,statesArray.index(stateleft)]+=0.1
+            t[statesArray.index(stateleft)]+=0.1
          else:
-            t[0, statesArray.index(state)]+=0.1
+            t[ statesArray.index(state)]+=0.1
          if stateright in statesArray:
-            t[0,statesArray.index(stateright)]+=0.1
+            t[statesArray.index(stateright)]+=0.1
          else:
-            t[0,statesArray.index(state)]+=0.1
+            t[statesArray.index(state)]+=0.1
     return t;
     
-print(transitionFunction(t1, (4,3), "up"))
-print(transitionFunction(t1, (3,1), "bottom"))
 
 
 
 
-def valueIterationv2(t1, t2, t3, gamma, epsilon):
+
+def valueIterationv2(states, reward, actions, gamma, epsilon):
     delta=math.inf
-    U=np.zeros((1,11))
-    Up=np.zeros((1,11))
+    U=[]
+    Up=[]
+    for j in range(len(states)):
+        U.append(0)
+        Up.append(0)
     iterationN=0
     
     while delta > (epsilon*(1-gamma)/gamma) :
-        U=np.copy(Up)
+        U=Up.copy()
         delta=0
         
         
-        for i in range(len(t1)):
-            state=t1[i]
+        for i in range(len(states)):
+            state=states[i]
             "récompense immédiate"
-            Up[0,i]=t2[i]
+            Up[i]=reward[i]
             
-            t=np.zeros((1, 4))
-            for action in t3:
+            
+            t=[]
+            
+            for k1 in range(len(actions)):
+                t.append(0)
                 
-                probabilityArray=transitionFunction(t1,state,action)
-                for k1 in range(len(t1)):
-                    t[0,t3.index(action)]+=probabilityArray[0,k1]*U[0,k1]
+                probabilityArray=transitionFunction(t1,state,actions[k1])
+                for k2 in range(len(states)):
+                  
+                    t[k1]+=probabilityArray[k2]*U[k2]
             
             
 
-            maxi=np.max(t)
-           # print(maxi)
-            Up[0,i]+=gamma*maxi
+            maxi=max(t)
+           
+            Up[i]+=gamma*maxi
         
             
-            #print(abs(Up[0,i]-U[0,i]))
-            #print(Up[0,i])
-            #print(U[0,i])
-            if abs(Up[0,i]-U[0,i])>delta:
-                delta=abs(Up[0,i]-U[0,i])
+           
+            if abs(Up[i]-U[i])>delta:
+                delta=abs(Up[i]-U[i])
         print(Up)
             
         print(iterationN)        
