@@ -22,23 +22,28 @@ U=np.zeros((1,11))
 
 
 
-def valueIteration(t1, t2, t3, gamma, epsilon):
+def valueIteration(states, statesValues, actions, wall,  gamma, epsilon):
     delta=math.inf
-    U=np.zeros((1,11))
-    Up=np.zeros((1,11))
+    U=[]
+    Up=[]
+    for i in range(len(states)):
+        U.append(0)
+        Up.append(0)
     iterationN=0
     
     while delta > (epsilon*(1-gamma)/gamma) :
-        U=np.copy(Up)
+        U=Up.copy()
         delta=0
         
         
-        for i in range(len(t1)):
-            state=t1[i]
+        for i in range(len(states)):
+            state=states[i]
             "récompense immédiate"
-            Up[0,i]=t2[i]
-            
-            t=np.zeros((1, 4))
+            Up[i]=statesValues[i]
+            t=[]
+            for j in range(len(actions)):
+                t.append(0)
+                
             if(i!=9 and i!=10):
                 
         
@@ -52,89 +57,88 @@ def valueIteration(t1, t2, t3, gamma, epsilon):
                 
                 "calcul pour up"
                 "dans le cas ou le deplacement peut s'effectuer"
-                if stateup in t1:
-                    t[0,0]+=0.8*U[0,t1.index(stateup)]
+                if stateup in states:
+                    t[0]+=0.8*U[states.index(stateup)]
             
-                if stateleft in t1:
-                    t[0,0]+=0.1*U[0,t1.index(stateleft)]
-                if stateright in t1:
-                    t[0,0]+=0.1*U[0,t1.index(stateright)]
+                if stateleft in states:
+                    t[0]+=0.1*U[states.index(stateleft)]
+                if stateright in states:
+                    t[0]+=0.1*U[states.index(stateright)]
                 "dans le cas ou le déplacement ne peut pas s'effectuer"
-                if stateup in t4:
-                    t[0,0]+=0.8*U[0,i]
-                if stateleft in t4:
-                    t[0,0]+=0.1*U[0,i]
-                if stateright in t4:
-                    t[0,0]+=0.1*U[0,i]
+                if stateup in wall:
+                    t[0]+=0.8*U[i]
+                if stateleft in wall:
+                    t[0]+=0.1*U[i]
+                if stateright in wall:
+                    t[0]+=0.1*U[i]
             
                 "calcul pour left"
                 "dans le cas ou le déplacement peut s'effectuer"
         
-                if stateleft in t1:
-                    t[0,2]+=0.8*U[0,t1.index(stateleft)]
-                if stateup in t1:
-                    t[0,2]+=0.1*U[0,t1.index(stateup)]
-                if statebottom in t1:
-                    t[0,2]+=0.1*U[0,t1.index(statebottom)]
+                if stateleft in states:
+                    t[2]+=0.8*U[states.index(stateleft)]
+                if stateup in states:
+                    t[2]+=0.1*U[states.index(stateup)]
+                if statebottom in states:
+                    t[2]+=0.1*U[states.index(statebottom)]
                     "dans le cas ou le déplacement ne peut pas s'effectuer"
-                if stateleft in t4:
-                    t[0,2]+=0.8*U[0,i]
-                if stateup in t4:
-                    t[0,2]+=0.1*U[0,i]
-                if statebottom in t4:
-                    t[0,2]+=0.1*U[0,i]
+                if stateleft in wall:
+                    t[2]+=0.8*U[i]
+                if stateup in wall:
+                    t[2]+=0.1*U[i]
+                if statebottom in wall:
+                    t[2]+=0.1*U[i]
         
                 "calcul pour right"
                 "dans le cas ou le déplacement peut s'effectuer"
         
-                if stateright in t1:
-                    t[0,3]+=0.8*U[0,t1.index(stateright)]
-                if stateup in t1:
-                    t[0,3]+=0.1*U[0,t1.index(stateup)]
-                if statebottom in t1:
-                    t[0,3]+=0.1*U[0,t1.index(statebottom)]
+                if stateright in states:
+                    t[3]+=0.8*U[states.index(stateright)]
+                if stateup in states:
+                    t[3]+=0.1*U[states.index(stateup)]
+                if statebottom in states:
+                    t[3]+=0.1*U[states.index(statebottom)]
                     "dans le cas ou le déplacement ne peut pas s'effectuer"
-                if stateright in t4:
-                    t[0,3]+=0.8*U[0,i]
-                if stateup in t4:
-                    t[0,3]+=0.1*U[0,i]
-                if statebottom in t4:
-                    t[0,3]+=0.1*U[0,i]
+                if stateright in wall:
+                    t[3]+=0.8*U[i]
+                if stateup in wall:
+                    t[3]+=0.1*U[i]
+                if statebottom in wall:
+                    t[3]+=0.1*U[i]
     
     
                 "calcul pour bottom"
                 "dans le cas ou le deplacement peut s'effectuer"
-                if statebottom in t1:
-                    t[0,1]+=0.8*U[0,t1.index(statebottom)]
-                if stateleft in t1:
-                    t[0,1]+=0.1*U[0,t1.index(stateleft)]
-                if stateright in t1:
-                    t[0,1]+=0.1*U[0,t1.index(stateright)]
+                if statebottom in states:
+                    t[1]+=0.8*U[states.index(statebottom)]
+                if stateleft in states:
+                    t[1]+=0.1*U[states.index(stateleft)]
+                if stateright in states:
+                    t[1]+=0.1*U[states.index(stateright)]
                 "dans le cas ou le déplacement ne peut pas s'effectuer"
-                if statebottom in t4:
-                    t[0,1]+=0.8*U[0,i]
-                if stateleft in t4:
-                    t[0,1]+=0.1*U[0,i]
-                if stateright in t4:
-                    t[0,1]+=0.1*U[0,i]
+                if statebottom in wall:
+                    t[1]+=0.8*U[i]
+                if stateleft in wall:
+                    t[1]+=0.1*U[i]
+                if stateright in wall:
+                    t[1]+=0.1*U[i]
                 
                 
             maxi=np.max(t)
-            #print(maxi)
-            Up[0,i]+=gamma*maxi
+            
+            Up[i]+=gamma*maxi
         
          
-            #print(abs(Up[0,i]-U[0,i]))
-            #print(Up[0,i])
-            #print(U[0,i])
-            if abs(Up[0,i]-U[0,i])>delta:
-                delta=abs(Up[0,i]-U[0,i])
+            
+            if abs(Up[i]-U[i])>delta:
+                delta=abs(Up[i]-U[i])
                 
         print(Up)
         print(iterationN)
         iterationN+=1
     
     return U,iterationN
+
 #parameters
 c=0.0001
 gamma=0.99
@@ -142,7 +146,9 @@ c2=0.01
 gamma2=0.55
 
 
-print(valueIteration(t1, t2, t3, gamma, c))
+print(valueIteration(t1, t2, t3,t4, gamma, c))
+
+
 
 
 def transitionFunction(statesArray, state, action):
