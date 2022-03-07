@@ -5,6 +5,7 @@ Created on Mon Mar  7 11:06:01 2022
 @author: Sioban
 """
 import numpy as np
+import random
 
 #creation du plateau 
 grille=np.zeros([5, 9])
@@ -96,5 +97,22 @@ def ObservationFunction(states, currentState):
 print(ObservationFunction(grille, (2,3)))
 print(ObservationFunction(grille, (1,1)))
 print(ObservationFunction(grille, (3,3)))
+
+def Initialisation(states):
+    t=[]
+    shape=np.shape(states)
+    print(shape)
+    for i in range(shape[0]):
+        for j in range(shape[1]):
+            if states[i,j]==1:
+                t.append((i, j))
+    print(t)
+    value=random.randint(0, len(t)-1)
+    return t[value]
+
+print(Initialisation(grille))        
+            
+        
+    
 def Game(states, reward, action):
     return "victory"
