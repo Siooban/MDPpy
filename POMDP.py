@@ -76,6 +76,7 @@ print(transitionFunctionD(grille,"left", (1,3)))
 
 
 #stochastic transition function
+
 #observationFunction
 """this function return the wall number surrounding a position"""
 def ObservationFunction(states, currentState):
@@ -98,7 +99,9 @@ print(ObservationFunction(grille, (2,3)))
 print(ObservationFunction(grille, (1,1)))
 print(ObservationFunction(grille, (3,3)))
 
+"""return the array of observation from the initial position """
 def Initialisation(states):
+    result=np.zeros((5,9))
     t=[]
     shape=np.shape(states)
     print(shape)
@@ -106,13 +109,51 @@ def Initialisation(states):
         for j in range(shape[1]):
             if states[i,j]==1:
                 t.append((i, j))
-    print(t)
     value=random.randint(0, len(t)-1)
-    return t[value]
-
-print(Initialisation(grille))        
+    observation=ObservationFunction(states, t[value])
+    if "up" in observation:
+        if "bottom" in observation:
+            result[1,2]=1/3
+            result[1,4]=1/3
+            result[1,6]=1/3
+            return t[value], result
+        elif "right" in observation:
+            result[1,7]=1
+        elif "left" in observation:
+            result[1,1]=1
+            return t[value], result
+        else: 
+            result[1,3]=1/2
+            result[1,5]=1/2
+            return t[value], result
+    
+    if "bottom" in observation:
+        if "right" in observation:
+            if "left" in observation:
+                result[3,1]=1/4
+                result[3,3]=1/4
+                result[3,5]=1/4
+                result[3,7]=1/4
+                return t[value], result
+    if "right" in observation:
+        if "left" in observation:
+            result[2,1]=1/4
+            result[2,3]=1/4
+            result[2,5]=1/4
+            result[2,7]=1/4
+            return t[value], result
             
-        
+    return t[value], result
+    
+    
+print(Initialisation(grille))   
+     
+""" update the probability array after an action"""
+def Update(states, action, probabilities):
+    shape=np.shape(states)
+    return probabilities
+    
+    
     
 def Game(states, reward, action):
     return "victory"
