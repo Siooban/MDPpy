@@ -34,12 +34,12 @@ grille[1,7]=1
 grille[2,7]=1
 grille[3,7]=1
 
-print(grille)
+#print(grille)
 
 reward=np.zeros([5, 9])
 reward[3,3]=10
 reward[3,5]=-100
-print(reward)
+#print(reward)
 
 action=["up","bottom", "left", "right"]
 
@@ -70,7 +70,7 @@ def transitionFunctionD(states, action, currentState):
             return currentState
         else: 
             return stateRight
-        
+   
         
 print(transitionFunctionD(grille,"left", (1,3)))
 
@@ -145,13 +145,46 @@ def Initialisation(states):
             
     return t[value], result
     
-    
-print(Initialisation(grille))   
-     
+init=Initialisation(grille)
+print(init)   
+
+def compare(ob1,ob2):
+    result =  all(elem in ob1  for elem in ob2)
+           
+    return result
+
+
+
 """ update the probability array after an action"""
-def Update(states, action, probabilities):
+def Update(states, probabilities, newObservation,action):
+ 
     shape=np.shape(states)
-    return probabilities
+    result=np.zeros(shape)
+    nbValue=0
+    indice=[]
+    for i in range(shape[0]):
+        for j in range(shape[1]):
+            if probabilities[i, j]!=0:
+                newState=transitionFunctionD(states,action, (i,j))
+                testObservation=ObservationFunction(states, newState)
+                print(testObservation,newObservation)
+                
+                test=compare(testObservation, newObservation)
+                if test:
+                    indice.append(newState)
+                    nbValue+=1
+                print( indice)
+    for k in range(len(indice)):
+        result[indice[k][0], indice[k][1]]=1/nbValue
+    return result
+
+currentPos=init[0]
+newPos=transitionFunctionD(grille,"bottom", currentPos)
+print(newPos)
+ob=ObservationFunction(grille, newPos)     
+newGrille=Update(grille,init[1],ob, "bottom")
+print("new grille")
+print(newGrille)
     
     
     
