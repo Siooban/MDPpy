@@ -41,7 +41,7 @@ reward[3,3]=10
 reward[3,5]=-100
 #print(reward)
 
-action=["up","bottom", "left", "right"]
+actions=["up","bottom", "left", "right"]
 
 
 #deterministic transition function
@@ -72,10 +72,14 @@ def transitionFunctionD(states, action, currentState):
             return stateRight
    
         
-print(transitionFunctionD(grille,"left", (1,3)))
+#print(transitionFunctionD(grille,"up", (3,7)))
 
 
 #stochastic transition function
+#0,8 to pick the right direction
+#0,2 to turn with a 90 deg angle
+
+
 
 #observationFunction
 """this function return the wall number surrounding a position"""
@@ -95,16 +99,16 @@ def ObservationFunction(states, currentState):
         wallDistribution.append('right')
     return wallDistribution
     
-print(ObservationFunction(grille, (2,3)))
-print(ObservationFunction(grille, (1,1)))
-print(ObservationFunction(grille, (3,3)))
+#print(ObservationFunction(grille, (2,3)))
+#print(ObservationFunction(grille, (1,1)))
+#print(ObservationFunction(grille, (3,3)))
 
 """return the array of observation from the initial position """
 def Initialisation(states):
     result=np.zeros((5,9))
     t=[]
     shape=np.shape(states)
-    print(shape)
+    
     for i in range(shape[0]):
         for j in range(shape[1]):
             if states[i,j]==1:
@@ -145,8 +149,8 @@ def Initialisation(states):
             
     return t[value], result
     
-init=Initialisation(grille)
-print(init)   
+"""init=Initialisation(grille)
+print(init) """  
 
 def compare(ob1,ob2):
     result =  all(elem in ob1  for elem in ob2)
@@ -165,28 +169,61 @@ def Update(states, probabilities, newObservation,action):
     for i in range(shape[0]):
         for j in range(shape[1]):
             if probabilities[i, j]!=0:
-                newState=transitionFunctionD(states,action, (i,j))
-                testObservation=ObservationFunction(states, newState)
-                print(testObservation,newObservation)
+                newPos=tuple((transitionFunctionD(states,action, (i,j))[0],transitionFunctionD(states,action, (i,j))[1]))
+                testObservation=ObservationFunction(states, newPos).copy()
+                print(testObservation, newObservation)
                 
-                test=compare(testObservation, newObservation)
-                if test:
-                    indice.append(newState)
+                #test=compare(testObservation, newObservation)
+                #print(test,newPos)
+                #if test:
+                if set(testObservation)==set(newObservation):
+                    indice.append(newPos)
                     nbValue+=1
-                print( indice)
+                print(indice)
     for k in range(len(indice)):
         result[indice[k][0], indice[k][1]]=1/nbValue
     return result
 
+"""print(ObservationFunction(grille, (1,7)))
+print(compare(['up', 'right'], ['up']))
 currentPos=init[0]
-newPos=transitionFunctionD(grille,"bottom", currentPos)
+newPos=transitionFunctionD(grille,"right", currentPos)
 print(newPos)
-ob=ObservationFunction(grille, newPos)     
-newGrille=Update(grille,init[1],ob, "bottom")
+ob=ObservationFunction(grille, newPos)
+print(ob)
+newGrille=Update(grille,init[1],ob, "right")
 print("new grille")
 print(newGrille)
+    """
     
     
+def Game(states, reward, actions):
+    init=Initialisation(states)
+    #print(init)
+    currentPos=init[0]
+    print(currentPos)
+    proba=init[1]
+    grilleG=np.copy(states)
     
-def Game(states, reward, action):
-    return "victory"
+    while True:
+        action=input("action choice: up, bottom, right, left")
+        print(action)
+        newPos=tuple((transitionFunctionD(states, action, currentPos)[0],transitionFunctionD(states, action, currentPos)[1]))
+        print(newPos)
+        currentPos=newPos
+        ob=ObservationFunction(states,currentPos)
+        proba=np.copy(Update(grille,proba, ob,action))
+        
+        print(proba)
+        
+        if reward[newPos[0],newPos[1]]==10:
+            print("Victory")
+            return 
+        if reward[newPos[0], newPos[1]]==-100:
+            print("Defeat")
+            return 
+        #print(init)
+    
+
+
+Game(grille, reward, actions)
