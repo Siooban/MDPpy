@@ -44,6 +44,8 @@ reward[3,5]=-100
 actions=["up","bottom", "left", "right"]
 
 
+
+
 #deterministic transition function
 def transitionFunctionD(states, action, currentState):
     if action=="up":
@@ -73,13 +75,85 @@ def transitionFunctionD(states, action, currentState):
    
         
 #print(transitionFunctionD(grille,"up", (3,7)))
+def transitionFunctionS(states, action, currentState):
+    dictionnaire={}
+    stateUp=(currentState[0]-1, currentState[1])
+    stateDown=(currentState[0]+1,currentState[1])
+    stateLeft=(currentState[0], currentState[1]-1)
+    stateRight=(currentState[0], currentState[1]+1)
+    if action=="up":
+        value=0
+        if states[stateUp[0], stateUp[1]]==1:
+            dictionnaire[(stateUp)]=0.8
+        else:
+            value+=0.8
+        if states[stateRight[0], stateRight[1]]==1:
+            dictionnaire[(stateRight)]=0.1
+        else:
+            value+=0.1
+        if states[stateLeft[0], stateLeft[1]]==1:
+            dictionnaire[(stateLeft)]=0.1
+        else:
+            value+=0.1
+        if value!=0:
+            dictionnaire[(currentState)]=value
+            
+    if action=="bottom":
+        value=0
+        if states[stateDown[0], stateDown[1]]==1:
+            dictionnaire[(stateDown)]=0.8
+        else:
+            value+=0.8
+        if states[stateRight[0], stateRight[1]]==1:
+            dictionnaire[(stateRight)]=0.1
+        else:
+            value+=0.1
+        if states[stateLeft[0], stateLeft[1]]==1:
+            dictionnaire[(stateLeft)]=0.1
+        else:
+            value+=0.1
+        if value!=0:
+            dictionnaire[(currentState)]=value
+        
+    if action=="left":
+        value=0
+        if states[stateLeft[0], stateLeft[1]]==1:
+            dictionnaire[(stateLeft)]=0.8
+        else:
+            value+=0.8
+        if states[stateUp[0], stateUp[1]]==1:
+            dictionnaire[(stateUp)]=0.1
+        else:
+            value+=0.1
+        if states[stateDown[0], stateDown[1]]==1:
+            dictionnaire[(stateDown)]=0.1
+        else:
+            value+=0.1
+        if value!=0:
+            dictionnaire[(currentState)]=value
+            
+    if action=="right":
+        value=0
+        if states[stateRight[0], stateRight[1]]==1:
+            dictionnaire[(stateRight)]=0.8
+        else:
+            value+=0.8
+        if states[stateUp[0], stateUp[1]]==1:
+            dictionnaire[(stateUp)]=0.1
+        else:
+            value+=0.1
+        if states[stateDown[0], stateDown[1]]==1:
+            dictionnaire[(stateDown)]=0.1
+        else:
+            value+=0.1
+        if value!=0:
+            dictionnaire[(currentState)]=value
+    return dictionnaire
+        
+        
 
 
-#stochastic transition function
-#0,8 to pick the right direction
-#0,2 to turn with a 90 deg angle
-
-
+print(transitionFunctionS(grille,"up", (3,7)))
 
 #observationFunction
 """this function return the wall number surrounding a position"""
@@ -99,10 +173,56 @@ def ObservationFunction(states, currentState):
         wallDistribution.append('right')
     return wallDistribution
     
-#print(ObservationFunction(grille, (2,3)))
-#print(ObservationFunction(grille, (1,1)))
-#print(ObservationFunction(grille, (3,3)))
+print(ObservationFunction(grille, (2,3)))
+print(ObservationFunction(grille, (1,1)))
+print(ObservationFunction(grille, (3,3)))
 
+""" this function return the wall number surrounding a position
+with uncertainty """
+def ObservationFunctionS(states, currentState):
+    proba=[]
+    wallDistributions=[]
+    wallDistribution=[]
+    stateUp=(currentState[0]-1, currentState[1])
+    if states[stateUp[0], stateUp[1]]==0:
+        wallDistribution.append(True)
+    else:
+        wallDistribution.append(False)
+    stateDown=(currentState[0]+1,currentState[1])
+    if states[stateDown[0],stateDown[1]]==0:
+        wallDistribution.append(True)
+    else:
+        wallDistribution.append(False)
+    stateLeft=(currentState[0], currentState[1]-1)
+    if states[stateLeft[0], stateLeft[1]]==0:
+        wallDistribution.append(True)
+    else:
+        wallDistribution.append(False)
+    stateRight=(currentState[0], currentState[1]+1)
+    if states[stateRight[0], stateRight[1]]==0:
+        wallDistribution.append(True)
+    else:
+        wallDistribution.append(False)
+    result=wallDistribution.copy()
+    wallDistributions.append(result)
+    proba.append(0.8)  
+    """ uncertainty"""
+    value=random.randint(0,3)
+    if wallDistribution[value]==False:
+        wallDistribution[value]=True
+    else:
+        wallDistribution[value]=False
+    wallDistributions.append(wallDistribution)
+    proba.append(0.2)
+    
+    return wallDistributions, proba
+    
+print(ObservationFunctionS(grille, (2,3)))
+print(ObservationFunctionS(grille, (1,1)))
+print(ObservationFunctionS(grille, (3,7)))    
+    
+    
+    
 """return the array of observation from the initial position """
 def Initialisation(states):
     result=np.zeros((5,9))
@@ -173,9 +293,7 @@ def Update(states, probabilities, newObservation,action):
                 testObservation=ObservationFunction(states, newPos).copy()
                 print(testObservation, newObservation)
                 
-                #test=compare(testObservation, newObservation)
-                #print(test,newPos)
-                #if test:
+                
                 if set(testObservation)==set(newObservation):
                     indice.append(newPos)
                     nbValue+=1
@@ -196,14 +314,15 @@ print("new grille")
 print(newGrille)
     """
     
-    
+
+
 def Game(states, reward, actions):
     init=Initialisation(states)
     #print(init)
     currentPos=init[0]
     print(currentPos)
     proba=init[1]
-    grilleG=np.copy(states)
+    #legrilleG=np.copy(states)
     
     while True:
         action=input("action choice: up, bottom, right, left")
