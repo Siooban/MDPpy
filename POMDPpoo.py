@@ -21,10 +21,109 @@ class POMDP(object):
         return self.actions
     def getRewards(self,transition):
         return self.rewards(transition)
+    def getRewardsOnState(self, state):
+        return self.rewards[state]
     def getObservationF(self, currentState):
         return self.ObservationF(self.states, currentState)
     def getTransitionF(self,action, currentState):
         return self.TransitionF(self.states,action,currentState)
+    
+    
+
+    
+class Simulateur(object):
+    def __init__(self, POMDP,initializationF,updateF):
+        self.POMDP=POMDP
+        self.initializationF=initializationF
+        initialization=initializationF(POMDP)
+        self.currentState=initialization[0]
+        self.belief=initialization[1]
+        self.updateF=updateF
+        
+    
+        
+    def getCurrentState(self):
+        return self.currentState
+        
+    def getBelief(self):
+        return self.belief
+        
+    def displayCurrentState(self):
+        print(self.getCurrentState())
+        
+    def displayBelief(self):
+        print(self.getBelief())
+    
+    def updateModel(self,newObservation,action):
+        self.belief=self.updateF(self.POMDP, self.oldBelief,newObservation,action)
+    
+    def runSimu(self):
+        while True:
+            action=input("action choice: up, bottom, right, left")
+            print(action)
+            print(self.currentState)
+            self.currentState=self.POMDP.getTransitionF(action, self.currentState)
+            print(self.currentState)
+            newOb=self.POMDP.getObservationF(self.currentState)
+            self.belief=self.updateModel(newOb,action)
+            print(self.belief)
+        
+            if self.POMDP.getReward(self,self.currentState)==10:
+                print("Victory")
+                return 
+            if self.POMDP.getReward(self,self.currentState)==-100:
+                print("Defeat")
+                return 
+        
+        
+def makeInitFunction():
+    def initialize(POMDP):
+        states=POMDP.getStates()
+        shape=np.shape(states)
+        t=[]
+        result=np.zeros(shape)
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+                if states[i,j]==1:
+                    t.append((i, j))
+        value=random.randint(0, len(t)-1)
+        result[t[value]]=1       
+        return  t[value], result
+    return initialize
+    
+def makeUpdateFunction():
+    def updateFunction(POMDP, oldBelief, newObservation, action):
+        shape=np.shape(POMDP.getStates())
+        """ new observation is an observation followed by the probability for this 
+        observation to occur"""
+        result=np.zeros(shape)
+        """alpha is the normalisation factor"""
+        alpha=0
+        """ for all states"""
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+                
+                if oldBelief[i,j]:
+                    newPossiblePosition=POMDP.getTransitionF(action, (i,j))
+                    for key in newPossiblePosition:
+                        testObservation=POMDP.getObservationF(key)
+                        observationProba=testObservation[len(testObservation)-1]
+                        for k in range(len(testObservation)-1):
+                            if compare(testObservation[k],newObservation[0]):
+                                result[key]+=newPossiblePosition(key)*oldBelief[i,j]*observationProba[k]
+                                alpha+=newPossiblePosition(key)*oldBelief[i,j]*observationProba[k]
+        """ normalization"""
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+                result[i,j]=result[i,j]/alpha
+        return result
+    return updateFunction
+        
+def compare(obs1, obs2):
+    for i in range(len(obs1)):
+        if obs1[i]!=obs2[i]:
+            return False
+    return True
     
     
 def makeObservationFunctionS():
@@ -182,9 +281,12 @@ rewardExample[3,5]=-100
 actionsExample=["up","bottom", "left", "right"]
 
 MazeExample=POMDP(grille, actionsExample, rewardExample,makeTransitionFunctionS(),makeObservationFunctionS())
-
+testSimu=Simulateur(MazeExample, makeInitFunction(),makeUpdateFunction())
 print(MazeExample.getStates())
 print(MazeExample.getActions())
 print(MazeExample.getObservationF((3,7)))
+
+testSimu.displayCurrentState()
+testSimu.displayBelief()
 
 print(MazeExample.getTransitionF("up",(3,7)))
