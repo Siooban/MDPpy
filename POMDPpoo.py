@@ -6,6 +6,7 @@ Created on Thu Mar 10 14:53:38 2022
 """
 import numpy as np
 import random
+
 """ """
 class POMDP(object):
     def __init__(self,states, actions, rewards, TransitionF, ObservationF):
@@ -21,12 +22,15 @@ class POMDP(object):
         return self.actions
     def getRewards(self,transition):
         return self.rewards(transition)
-    def getRewardsOnState(self, state):
+    def getRewardOnState(self, state):
         return self.rewards[state]
     def getObservationF(self, currentState):
         return self.ObservationF(self.states, currentState)
     def getTransitionF(self,action, currentState):
         return self.TransitionF(self.states,action,currentState)
+    
+    
+    
     
     
 
@@ -39,6 +43,7 @@ class Simulateur(object):
         self.currentState=initialization[0]
         self.belief=initialization[1]
         self.updateF=updateF
+      
         
     
         
@@ -53,25 +58,86 @@ class Simulateur(object):
         
     def displayBelief(self):
         print(self.getBelief())
+        
+    def getAllObservationF(self):
+        return self.allObservationF(self.POMDP.getStates(), self.currentState)
     
     def updateModel(self,newObservation,action):
-        self.belief=self.updateF(self.POMDP, self.oldBelief,newObservation,action)
+        self.belief=self.updateF(self.POMDP, self.belief,newObservation,action)
     
+    def makeTransition(self,action):
+        possibleTransition=self.POMDP.getTransitionF(action, self.currentState)
+        test=[True, True]
+        for key in possibleTransition.keys():
+            if possibleTransition[key]==0.9:
+                test[0]=False
+            if possibleTransition[key]==0.2:
+                test[1]=False
+        chosenTransition=random.randint(1,10)
+        if test[0] and test[1]:
+            for key in possibleTransition.keys():
+                
+                if possibleTransition[key]==0.8 and chosenTransition<=8:
+                    return key
+                if possibleTransition[key]==0.1 and chosenTransition==9:
+                    return key
+                if possibleTransition[key]==0.1 and chosenTransition==10:
+                    return key
+        elif test[0]:
+            if possibleTransition[key]==0.8 and chosenTransition<=8:
+                return key
+            if possibleTransition[key]==0.2 and chosenTransition>8:
+                return key
+        else:
+            for key in possibleTransition.keys():
+               
+                if possibleTransition[key] ==0.9 and chosenTransition<=9:
+                    return key
+                if possibleTransition[key]==0.1 and chosenTransition==10:
+                    return key
+            
+                
+        
+                
+                
+                
+        
+        
     def runSimu(self):
+        print(self. belief)
         while True:
+            
             action=input("action choice: up, bottom, right, left")
             print(action)
+            
+            possibleCurrentState=self.POMDP.getTransitionF(action, self.currentState)
+            print(possibleCurrentState)
+            self.currentState=self.makeTransition(action)
             print(self.currentState)
-            self.currentState=self.POMDP.getTransitionF(action, self.currentState)
-            print(self.currentState)
-            newOb=self.POMDP.getObservationF(self.currentState)
-            self.belief=self.updateModel(newOb,action)
+            key_list = list(possibleCurrentState.keys())
+            print(key_list)
+            
+                
+            allOb=self.POMDP.getObservationF(self.currentState)
+            observationArray=allOb[0]
+            if allOb[2]==1:
+                currentOb=observationArray[1]
+            elif allOb[2]==2:
+                currentOb=observationArray[2]
+            elif allOb[2]==3:
+                currentOb=observationArray[3]
+            elif allOb[2]==4:
+                currentOb=observationArray[4]
+            else:
+                currentOb=observationArray[0]
+                
+            self.updateModel(currentOb,action)
             print(self.belief)
         
-            if self.POMDP.getReward(self,self.currentState)==10:
+            if self.POMDP.getRewardOnState(self.currentState)==10:
                 print("Victory")
                 return 
-            if self.POMDP.getReward(self,self.currentState)==-100:
+            if self.POMDP.getRewardOnState(self.currentState)==-100:
                 print("Defeat")
                 return 
         
@@ -99,6 +165,7 @@ def makeUpdateFunction():
         result=np.zeros(shape)
         """alpha is the normalisation factor"""
         alpha=0
+        
         """ for all states"""
         for i in range(shape[0]):
             for j in range(shape[1]):
@@ -106,16 +173,18 @@ def makeUpdateFunction():
                 if oldBelief[i,j]:
                     newPossiblePosition=POMDP.getTransitionF(action, (i,j))
                     for key in newPossiblePosition:
-                        testObservation=POMDP.getObservationF(key)
-                        observationProba=testObservation[len(testObservation)-1]
-                        for k in range(len(testObservation)-1):
-                            if compare(testObservation[k],newObservation[0]):
-                                result[key]+=newPossiblePosition(key)*oldBelief[i,j]*observationProba[k]
-                                alpha+=newPossiblePosition(key)*oldBelief[i,j]*observationProba[k]
+                        testObservations=POMDP.getObservationF(key)
+                        possibleObservation=testObservations[0]
+                        observationProba=testObservations[1]
+                        for k in range(len(possibleObservation)):
+                            if compare(possibleObservation[k],newObservation):
+                                value=newPossiblePosition[key]*oldBelief[i,j]*observationProba[k]
+                                result[key]+=value
+                                alpha+=value
         """ normalization"""
         for i in range(shape[0]):
             for j in range(shape[1]):
-                result[i,j]=result[i,j]/alpha
+                result[i,j]/=alpha
         return result
     return updateFunction
         
@@ -124,13 +193,18 @@ def compare(obs1, obs2):
         if obs1[i]!=obs2[i]:
             return False
     return True
+
+
+        
+
     
-    
+""" this version return the an array that contain two possibility with their probability""" 
 def makeObservationFunctionS():
         
     """ this function return the wall number surrounding a position
     with uncertainty """
     def ObservationFunctionS(states, currentState):
+        """normal observation"""
         proba=[]
         wallDistributions=[]
         wallDistribution=[]
@@ -157,6 +231,53 @@ def makeObservationFunctionS():
         result=wallDistribution.copy()
         wallDistributions.append(result)
         proba.append(0.8)  
+        """ other observation"""
+        for i in range(0,4):
+            value=wallDistribution.copy()
+            if value[i]:
+                value[i]=False
+            else:
+                value[i]=True
+            wallDistributions.append(value)
+            proba.append(0.05)
+        chosenValue=random.randint(1,20)
+        return wallDistributions, proba, chosenValue
+    return ObservationFunctionS
+
+
+
+"""return a simple observation with uncertainty"""
+def makeObservationFunctionSv2():
+        
+    """ this function return the wall number surrounding a position
+    with uncertainty """
+    def ObservationFunctionSv2(states, currentState):
+        
+        wallDistributions=[]
+        wallDistribution=[]
+        stateUp=(currentState[0]-1, currentState[1])
+        if states[stateUp[0], stateUp[1]]==0:
+            wallDistribution.append(True)
+        else:
+            wallDistribution.append(False)
+        stateDown=(currentState[0]+1,currentState[1])
+        if states[stateDown[0],stateDown[1]]==0:
+            wallDistribution.append(True)
+        else:
+            wallDistribution.append(False)
+        stateLeft=(currentState[0], currentState[1]-1)
+        if states[stateLeft[0], stateLeft[1]]==0:
+            wallDistribution.append(True)
+        else:
+            wallDistribution.append(False)
+        stateRight=(currentState[0], currentState[1]+1)
+        if states[stateRight[0], stateRight[1]]==0:
+            wallDistribution.append(True)
+        else:
+            wallDistribution.append(False)
+        result=wallDistribution.copy()
+        wallDistributions.append(result)
+        
         """ uncertainty"""
         value=random.randint(0,3)
         if wallDistribution[value]==False:
@@ -164,10 +285,15 @@ def makeObservationFunctionS():
         else:
             wallDistribution[value]=False
         wallDistributions.append(wallDistribution)
-        proba.append(0.2)
+        
+        ObservationChosen=random.randint(1,10)
+        if ObservationChosen>8:
+            return wallDistributions[1]
+        else:
+            return wallDistribution[0]
     
-        return wallDistributions, proba
-    return ObservationFunctionS
+    return ObservationFunctionSv2
+
     
 def makeTransitionFunctionS():
     def transitionFunctionS(states, action, currentState):
@@ -176,6 +302,8 @@ def makeTransitionFunctionS():
         stateDown=(currentState[0]+1,currentState[1])
         stateLeft=(currentState[0], currentState[1]-1)
         stateRight=(currentState[0], currentState[1]+1)
+        
+        
         if action=="up":
             value=0
             if states[stateUp[0], stateUp[1]]==1:
@@ -192,7 +320,7 @@ def makeTransitionFunctionS():
                 value+=0.1
             if value!=0:
                 dictionnaire[(currentState)]=value
-            
+                              
         if action=="bottom":
             value=0
             if states[stateDown[0], stateDown[1]]==1:
@@ -286,7 +414,9 @@ print(MazeExample.getStates())
 print(MazeExample.getActions())
 print(MazeExample.getObservationF((3,7)))
 
-testSimu.displayCurrentState()
-testSimu.displayBelief()
+#testSimu.displayCurrentState()
+#testSimu.displayBelief()
+testSimu.runSimu()
 
-print(MazeExample.getTransitionF("up",(3,7)))
+
+#print(MazeExample.getTransitionF("up",(3,7)))
